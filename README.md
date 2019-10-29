@@ -8,4 +8,5 @@ Code pour le devoir 2 de BDD répartie
 Les cours d'[OpenClassRoom](https://openclassrooms.com/fr/courses/409949-apprenez-la-programmation-avec-scala/409697-pourquoi-scala) et de [TutorialsPoints](https://www.tutorialspoint.com/scala/scala_overview.htm)  
 Tutoriel Spark sur [TutorialsPoint](https://www.tutorialspoint.com/apache_spark/index.htm)  
 
-[Base de données des monstres](http://legacy.aonprd.com/indices/bestiary.html)
+[Base de données des monstres](http://legacy.aonprd.com/indices/bestiary.html)  
+[Base de données des sorts](http://legacy.aonprd.com/coreRulebook/spellIndex.html)
