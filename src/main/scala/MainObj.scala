@@ -18,16 +18,18 @@ object MainObj extends  App {
   var num_spells = 1975
   var num_monsters = 2955
 
- // val listSpells = get_n_spells(num_spells,first_id)
+  //val listSpells = get_n_spells(num_spells,first_id)
   val listMonsters = get_n_monsters(num_monsters,first_id)
 
+  // AFFICHAGE ET DEBUGS
   val test = 0
-  new PrintWriter("monsters.txt") { // On enregistre dans un format texte les noms pour
-    for (i <- 1 until num_monsters) { //           contrôler l'intégrité du crawler monstre
-      println(listMonsters(i).name)
-    }
-    close()
-  }
+
+  /*for (i <- 1 until num_spells) {
+    println(listSpells(i).name)
+  }*/
+
+
+  // FONCTIONS
 
   def get_n_spells(n:Integer,first_id:Integer): ListBuffer[Spell] ={
     var listSpells = new ListBuffer[Spell]
@@ -58,6 +60,7 @@ object MainObj extends  App {
         case e: Exception => println("La page html est introuvable. " + e) }
       var monster = new Monster(s, first_id+i)
       listMonsters += monster
+      println(i+1)
     }
     listMonsters
   }
