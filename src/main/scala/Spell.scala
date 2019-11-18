@@ -1,8 +1,8 @@
 import scala.collection.mutable.ListBuffer
-import scala.io.Source
 
 class Spell(spellString:String, spellID_arg:Integer, var spell_ID:Integer = 0, var content:String = "none",
-            var name: String = "none") {
+            var name: String = "none", var spellMonsters : ListBuffer[String] = new ListBuffer[String])
+  extends java.io.Serializable {
 
   def get_content():Boolean={
     val indexOf1 =spellString.indexOf("<!-- START Spell -->")

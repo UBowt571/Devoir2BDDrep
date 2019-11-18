@@ -1,13 +1,10 @@
-import java.io.{File, PrintWriter}
-
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable.ListBuffer
 import scala.io.{BufferedSource, Source}
-import scala.util.matching.Regex
 
 
-object MainObj extends  App {
+object MainObj extends App {
   val conf = new SparkConf()
     .setAppName("SparkTester")
     .setMaster("local[*]")
@@ -18,11 +15,19 @@ object MainObj extends  App {
   var num_spells = 1975
   var num_monsters = 2955
 
-  //val listSpells = get_n_spells(num_spells,first_id)
+  var listSpells = get_n_spells(num_spells,first_id)
   val listMonsters = get_n_monsters(num_monsters,first_id)
+  println("crawler OK, début RDD")
+
+  var listSpellsWithMonsters = matchSpellsWithMonsters(listSpells,listMonsters)
+  println("RDD spells OK")
+
+  printSpellsWithMonsters(listSpellsWithMonsters)
+  println("Print spells OK")
 
   // AFFICHAGE ET DEBUGS
   val test = 0
+
 
   /*for (i <- 1 until num_spells) {
     println(listSpells(i).name)
@@ -34,10 +39,10 @@ object MainObj extends  App {
   def get_n_spells(n:Integer,first_id:Integer): ListBuffer[Spell] ={
     var listSpells = new ListBuffer[Spell]
     val url_base = "file:///C:/Users/Gab/IdeaProjects/Devoir2BDDrep_data/spells/spell_"
-    var url_end = ".html"
+    val url_end = ".html"
     for(i <- 0 until n ){
-      var html = Source.fromURL(url_base+(first_id+i)+url_end)
-      var s = html.mkString
+      val html = Source.fromURL(url_base+(first_id+i)+url_end)
+      val s = html.mkString
       var spell = new Spell(s, first_id+i)
       listSpells += spell
     }
@@ -47,12 +52,10 @@ object MainObj extends  App {
   def get_n_monsters(n:Integer,first_id:Integer): ListBuffer[Monster] ={
     var listMonsters = new ListBuffer[Monster]
     val url_base = "file:///C:/Users/Gab/IdeaProjects/Devoir2BDDrep_data/monsters/MDB_MonsterBlock.asp%23003FMDBID="
-    var url_end = ".html"
+    val url_end = ".html"
     var html:BufferedSource = null
     var s = ""
     for(i <- 0 until n ){
-      var link = url_base+(first_id+i)+url_end
-      var test2 = 1
       try {
         html = Source.fromURL(url_base+(first_id+i)+url_end)
         s = html.mkString
@@ -63,5 +66,31 @@ object MainObj extends  App {
       println(i+1)
     }
     listMonsters
+  }
+
+  def matchSpellsWithMonsters(listSpells : ListBuffer[Spell], listMonsters : ListBuffer[Monster]): Array[Spell] ={
+    val spellsRDD = sc.makeRDD(listSpells)
+    val resultRDD = spellsRDD.map(current_spell =>{
+      for(j <- listMonsters.indices){
+        for(k <- listMonsters(j).monsterSpells.indices){
+          if(current_spell.name.toLowerCase == listMonsters(j).monsterSpells(k)){
+            current_spell.spellMonsters.append(listMonsters(j).name)
+          }
+        }
+      }
+      current_spell
+    })
+    val listSpellsWithMonsters = resultRDD.collect()
+    listSpellsWithMonsters
+  }
+
+  def printSpellsWithMonsters(arraySpells : Array[Spell]): Unit ={
+    for(i <- arraySpells.indices) {
+      print(arraySpells(i).name + " : ")
+      for(j <- arraySpells(i).spellMonsters.indices){
+        print(arraySpells(i).spellMonsters(j) + " - ")
+      }
+      println("\n")
+    }
   }
 }
