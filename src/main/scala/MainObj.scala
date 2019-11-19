@@ -12,43 +12,13 @@ object MainObj extends App {
   sc.setLogLevel("ERROR")
 
   var first_id = 1
-  var num_spells = 1975
   var num_monsters = 2955
 
-  var listSpells = get_n_spells(num_spells,first_id)
   val listMonsters = get_n_monsters(num_monsters,first_id)
-  println("crawler OK, début RDD")
-
-  var listSpellsWithMonsters = matchSpellsWithMonsters(listSpells,listMonsters)
-  println("RDD spells OK")
-
+  var listSpellsWithMonsters = matchSpellsWithMonsters(listMonsters)
   printSpellsWithMonsters(listSpellsWithMonsters)
-  println("Print spells OK")
-
-  // AFFICHAGE ET DEBUGS
-  val test = 0
-
-
-  /*for (i <- 1 until num_spells) {
-    println(listSpells(i).name)
-  }*/
-
 
   // FONCTIONS
-
-  def get_n_spells(n:Integer,first_id:Integer): ListBuffer[Spell] ={
-    var listSpells = new ListBuffer[Spell]
-    val url_base = "file:///C:/Users/Gab/IdeaProjects/Devoir2BDDrep_data/spells/spell_"
-    val url_end = ".html"
-    for(i <- 0 until n ){
-      val html = Source.fromURL(url_base+(first_id+i)+url_end)
-      val s = html.mkString
-      var spell = new Spell(s, first_id+i)
-      listSpells += spell
-    }
-    listSpells
-  }
-
   def get_n_monsters(n:Integer,first_id:Integer): ListBuffer[Monster] ={
     var listMonsters = new ListBuffer[Monster]
     val url_base = "file:///C:/Users/Gab/IdeaProjects/Devoir2BDDrep_data/monsters/MDB_MonsterBlock.asp%23003FMDBID="
@@ -63,34 +33,32 @@ object MainObj extends App {
         case e: Exception => println("La page html est introuvable. " + e) }
       var monster = new Monster(s, first_id+i)
       listMonsters += monster
-      println(i+1)
     }
     listMonsters
   }
 
-  def matchSpellsWithMonsters(listSpells : ListBuffer[Spell], listMonsters : ListBuffer[Monster]): Array[Spell] ={
-    val spellsRDD = sc.makeRDD(listSpells)
-    val resultRDD = spellsRDD.map(current_spell =>{
-      for(j <- listMonsters.indices){
-        for(k <- listMonsters(j).monsterSpells.indices){
-          if(current_spell.name.toLowerCase == listMonsters(j).monsterSpells(k)){
-            current_spell.spellMonsters.append(listMonsters(j).name)
-          }
-        }
+  def matchSpellsWithMonsters(listMonsters : ListBuffer[Monster]): Array[(String, String)] ={
+    val listMonstersRDD = sc.makeRDD(listMonsters)
+    val monstersFlatMap = listMonstersRDD.flatMap(current_monster => {
+      var result = new ListBuffer[(String, String)]()
+      for(i <- current_monster.monsterSpells){
+        result.append((i, current_monster.name))
       }
-      current_spell
+      result
     })
-    val listSpellsWithMonsters = resultRDD.collect()
-    listSpellsWithMonsters
+    var spellsReduced = monstersFlatMap.reduceByKey((spell, monsters) => spell+monsters)
+    var spellsArray = spellsReduced.collect
+    spellsArray
   }
 
-  def printSpellsWithMonsters(arraySpells : Array[Spell]): Unit ={
-    for(i <- arraySpells.indices) {
-      print(arraySpells(i).name + " : ")
-      for(j <- arraySpells(i).spellMonsters.indices){
-        print(arraySpells(i).spellMonsters(j) + " - ")
+  def printSpellsWithMonsters(arraySpells : Array[(String, String)]): Unit ={
+    //new PrintWriter("res.txt"){
+      for(i <- arraySpells) {
+        println(i._1 + " : " + i._2.substring(0,i._2.lastIndexOf(" - ")))
+        println("\n")
       }
-      println("\n")
-    }
+      //close()
+    //}
+
   }
 }

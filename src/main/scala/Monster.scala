@@ -14,6 +14,7 @@ class Monster(monsterString:String, monsterID_arg:Integer, var monster_ID:Intege
 
   def get_name(): String ={
     name = content.substring(content.indexOf("align=\"left\"")+28,content.indexOf("</b></td>"))
+    name+=" - "
     name
   }
 
@@ -51,6 +52,8 @@ class Monster(monsterString:String, monsterID_arg:Integer, var monster_ID:Intege
       // On commence par enlever les infos sur les cooldowns des spells : "At will - 1st -"
       // ainsi que les informations entre paranthèses : spell1 (DC 12), spell2 (3)
       monsterSpells(i) = monsterSpells(i).replaceAll("Constant[ -]*|([Aa])t ([Ww])ill[ -]*|[0-9](st|nd|rd|th)[ -]*|0 [(]at will[)][ -]*|[(]*[0-9]/(day|week|month|year)[ )-]*|[ ]*[(][A-Za-z0-9.,% -|]*[)]","")
+      // On gère et retire les quelques exceptions
+      monsterSpells(i) = monsterSpells(i).replaceAll("any one of the following, with a maximum duration of 1 week: |APG","")
       // On détecte spell par spell qui sont séparés par ", "
       val arrayMonsterSpells = monsterSpells(i).split(", ")
       for(i <- arrayMonsterSpells.indices){
@@ -69,5 +72,4 @@ class Monster(monsterString:String, monsterID_arg:Integer, var monster_ID:Intege
     }
     monsterSpells2
   }
-
 }
