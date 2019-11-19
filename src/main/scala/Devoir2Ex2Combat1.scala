@@ -130,17 +130,19 @@ object Devoir2Ex2Combat1  extends  App {
     def flail_melee()={}
   }
 
-  class edge(val src:monster,val dst:monster,var distance:Int)
+  class edge(val endA:monster,val endB:monster,var distance:Int)
 
   def init()={
     var enemies = new ListBuffer[monster]
     for(i <- 0 until 9){
-      enemies += new worgRider("worgRider"+(i+1))
+      enemies += new worgRider
     }
     for(i <- 0 until 4){
-      enemies += new doubleAxeFury("doubleAxeFury"+(i+1))
+      enemies += new doubleAxeFury
     }
     enemies += warlord
+    enemies
+  }
 
     var edges = new ListBuffer[edge]
     for(i <- enemies.indices){
