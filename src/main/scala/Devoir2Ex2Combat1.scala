@@ -13,22 +13,24 @@ object Devoir2Ex2Combat1  extends  App {
   sc.setLogLevel("ERROR")
   var d = new Random()
 
-  case class attack_damage(val dice_num:Int,val dice_size:Int,val attack_damage_value:Int)
-  case class attack_roll(val dice_num:Int,val dice_size:Int)
+  case class attack_damage(dice_num:Int, dice_size:Int, attack_damage_value:Int)
+  case class attack_roll(dice_num:Int, dice_size:Int)
 
   abstract class monster(val AC:Int,var hp:Int,val speed:Int,var altitude:Int){      // Very main class for interaction between every entity
     val ID:Int=monster.lastID
     monster.lastID+=1
-    var melee_range:Int
-    var ranged_attack_range:Int
-    var melee_damage:attack_damage
-    var ranged_attack_damage:attack_damage
+    val melee_range:Int
+    val ranged_attack_range:Int
+    val melee_damage:attack_damage
+    val ranged_attack_damage:attack_damage
+    var melee_attack_rolls:ListBuffer[Int]=_
+    var range_attack_rolls:ListBuffer[Int]=_
 
     def melee_attack(): Unit ={}
     def ranged_attack():Unit={}
 
-    def getAttackRoll()={
-      d.nextInt(monster.ATTACK_ROLL.dice_size) * monster.ATTACK_ROLL.dice_num
+    def getAttackRoll(param:Int): Int ={
+      (d.nextInt(monster.ATTACK_ROLL.dice_size) * monster.ATTACK_ROLL.dice_num)+param
     }
 
     override def toString: String = {s"ID : $ID  =  (AC : $AC, HP : $hp, altitude : $altitude, speed : $speed)"}
@@ -36,10 +38,10 @@ object Devoir2Ex2Combat1  extends  App {
     def findTarget(range:Int): monster ={
       var idealTarget:monster=null
       if(adjList.nonEmpty){
-        val closeEnoughEnemies = adjList.filter(x => getEuclidianDist(x) <= range)                       // Check if there are enemies close enough
+        val closeEnoughEnemies = adjList.filter(x => getEuclideanDist(x) <= range)                       // Check if there are enemies close enough
         if(closeEnoughEnemies.nonEmpty){
           val closestEnemy = closeEnoughEnemies.minBy(_.distance)                                 // Get closest enemy
-          val closestEnemies = closeEnoughEnemies.filter(x => (x.distance <= closestEnemy.distance))
+          val closestEnemies = closeEnoughEnemies.filter(x => x.distance <= closestEnemy.distance)
 
           if(closestEnemies.size>1){                                                          // If multiple enemies closest : check for lowest AC
             val lowestACEnemy = findLowestAC(closestEnemies)                                 // Get lowest AC enemy
@@ -92,9 +94,9 @@ object Devoir2Ex2Combat1  extends  App {
       ennemy
     }
 
-    def pow(param:Int,power:Int)={scala.math.pow(param,power)}
-    def sqrt(param:Double)={scala.math.sqrt(param)}
-    def getEuclidianDist(edge:edge) ={
+    def pow(param:Int,power:Int): Double ={scala.math.pow(param,power)}
+    def sqrt(param:Double): Double ={scala.math.sqrt(param)}
+    def getEuclideanDist(edge:edge): Double ={
       val distPow2 = pow(edge.distance,2)
       val altPow2 = pow(getEnemyFromEdge(edge).altitude,2)
       sqrt(distPow2 + altPow2)
