@@ -144,14 +144,17 @@ object Devoir2Ex2Combat1  extends  App {
     enemies
   }
 
-    var edges = new ListBuffer[edge]
-    for(i <- enemies.indices){
-      edges += new edge(enemies(i),angel_solar,100)
-    }
-    enemies
+  var enemies = init()      // enemies : ListBuffer containing all "bad" monsters, enemies of the angel solar
+  var edges = new ListBuffer[edge]
+  for(i <- enemies.indices){
+    edges += new edge(enemies(i),angel_solar,d.nextInt(50)+200)
+    enemies(i).adjList += edges(i)    // every monster knows the angel solar
+    angel_solar.adjList += edges(i)   // the angel solar knows everybody        Both are linked to instances so if change is made from one end one the edge, both ends see the change
   }
 
-  var enemies = init()      // enemies : ListBuffer containing all "bad" monsters, enemies of the angel solar
+  // END OF INIT
+  // START OF THE FIGHT
+
 
   enemies(10).altitude = 100
 
