@@ -112,16 +112,7 @@ object Devoir2Ex2Combat1  extends  App {
     }
   }
 
-  object monster{var lastID = 0;val MAX_AC_EVER:Int = 100000000;val DEFAULT_MELEE_RANGE = 10;val ATTACK_ROLL = attack_roll(1,20)}
-
-  object angel_solar extends monster(44,363,50,0){   // angel solar, as stated : object bc only one angel solar
-    var melee_range:Int=monster.DEFAULT_MELEE_RANGE
-    var ranged_attack_range:Int=110
-    var melee_damage:attack_damage = attack_damage(3,6,18)                //3d6+18
-    var ranged_attack_damage:attack_damage = attack_damage(2,6,14)        //2d6+14
-    def greatSword_melee()={
-
-    }
+  object monster{var lastID = 0;val MAX_AC_EVER:Int = 100000000;val DEFAULT_SMALL_MELEE_RANGE = 10;val DEFAULT_BIG_MELEE_RANGE = 10;val ATTACK_ROLL = attack_roll(1,20)}
 
   object angel_solar extends monster(44,363,0,0){   // angel solar, as stated : object bc only one angel solar
     val num_attacks:Int = 4
