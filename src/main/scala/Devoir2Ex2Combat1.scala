@@ -33,7 +33,16 @@ object Devoir2Ex2Combat1  extends  App {
       (d.nextInt(monster.ATTACK_ROLL.dice_size) * monster.ATTACK_ROLL.dice_num)+param
     }
 
-    override def toString: String = {s"ID : $ID  =  (AC : $AC, HP : $hp, altitude : $altitude, speed : $speed)"}
+    override def toString: String = {getShortClassName + "  =  (AC : "+AC+", HP : "+hp+", altitude : "+altitude+", speed : "+speed+")"}
+    def getShortClassName:String={
+      var result = this.getClass.getSimpleName
+      val dollar_index = this.getClass.getSimpleName.lastIndexOf("$")
+      if(dollar_index!= -1){
+        result = result.substring(0,dollar_index)
+      }
+      result += " (ID : "+this.ID+")"
+      result
+    }
     var adjList:ListBuffer[edge] = new ListBuffer[edge]
     def findTarget(range:Int): monster ={
       var idealTarget:monster=null
