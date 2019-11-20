@@ -123,22 +123,41 @@ object Devoir2Ex2Combat1  extends  App {
 
     }
 
-  object angel_solar extends monster("angel_solar",44,363,0){   // angel solar, as stated : object bc only one angel solar
-    def greatSword_melee()={}
-    def bow_ranged()={}
-    def fly()={}
+  object angel_solar extends monster(44,363,0,0){   // angel solar, as stated : object bc only one angel solar
+    val num_attacks:Int = 4
+    val melee_range:Int=monster.DEFAULT_BIG_MELEE_RANGE
+    val ranged_attack_range:Int=110
+    val melee_damage:attack_damage = attack_damage(3,6,18)                //3d6+18
+    melee_attack_rolls = Array(35,30,25,20)
+    val ranged_attack_damage:attack_damage = attack_damage(2,6,14)        //2d6+14
+    ranged_attack_rolls = Array(31,26,21,16)
   }
-  class worgRider(pname:String,pAC:Int=18,pHP:Int=13,pAltitude:Int=0) extends monster(pname,pAC,pHP,pAltitude){   // worgRider class, 9 of them are instantiated later
-    def battleaxe_melee()={}
-    def shortbow_ranged()={}
+  class worgRider(pAC:Int=18,pHP:Int=13,pSpeed:Int = 20,pAltitude:Int=0) extends monster(pAC,pHP,pSpeed,pAltitude){   // worgRider class, 9 of them are instantiated later
+    val num_attacks:Int = 1
+    val melee_range:Int=monster.DEFAULT_SMALL_MELEE_RANGE
+    val ranged_attack_range:Int=60
+    val melee_damage:attack_damage = attack_damage(1,6,2)                //1d8+2
+    melee_attack_rolls = Array(6)
+    val ranged_attack_damage:attack_damage = attack_damage(1,6,0)        //1d6
+    ranged_attack_rolls = Array(4)
   }
-  class doubleAxeFury(pname:String,pAC:Int=17,pHP:Int=142,pAltitude:Int=0) extends monster(pname,pAC,pHP,pAltitude){  // doubleAxeFury class, 4 of them are instantiated later
-    def orcDoubleAxe_melee()={}
-    def compositeLongbow_ranged()={}
+  class doubleAxeFury(pAC:Int=17,pHP:Int=142,pSpeed:Int = 40,pAltitude:Int=0) extends monster(pAC,pHP,pSpeed,pAltitude){  // doubleAxeFury class, 4 of them are instantiated later
+    val num_attacks:Int = 3
+    val melee_range:Int=monster.DEFAULT_SMALL_MELEE_RANGE
+    val ranged_attack_range:Int=110
+    val melee_damage:attack_damage = attack_damage(1,8,10)                //1d8+10
+    melee_attack_rolls = Array(19,14,9)
+    val ranged_attack_damage:attack_damage = attack_damage(1,8,6)        //1d8+6
+    ranged_attack_rolls = Array(16,11,6)
   }
-  object warlord extends monster("warlord",27,141,0){     // warlord, as stated : object bc only one angel solar
-    def throwingAxe_ranged()={}
-    def flail_melee()={}
+  object warlord extends monster(27,141,30,0){     // warlord, as stated : object bc only one angel solar
+    val num_attacks:Int = 3
+    val melee_range:Int=monster.DEFAULT_BIG_MELEE_RANGE
+    val ranged_attack_range:Int=10
+    val melee_damage:attack_damage = attack_damage(1,8,10)                //1d8+10
+    melee_attack_rolls = Array(20,15,10)
+    val ranged_attack_damage:attack_damage = attack_damage(1,6,5)        //1d6+5
+    ranged_attack_rolls = Array(19)
   }
 
   class edge(val endA:monster,val endB:monster,var distance:Int)
