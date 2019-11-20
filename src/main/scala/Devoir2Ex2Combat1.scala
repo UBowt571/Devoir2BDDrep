@@ -20,14 +20,14 @@ object Devoir2Ex2Combat1  extends  App {
     val ID:Int=monster.lastID
     monster.lastID+=1
     val num_attacks:Int
-    val num_melee_attack_realised:Int
-    val num_ranged_attack_realised:Int
+    var num_melee_attack_realised:Int=0
+    var num_ranged_attack_realised:Int=0
     val melee_range:Int
     val ranged_attack_range:Int
     val melee_damage:attack_damage
     val ranged_attack_damage:attack_damage
-    var melee_attack_rolls:ListBuffer[Int]=_
-    var range_attack_rolls:ListBuffer[Int]=_
+    var melee_attack_rolls:Array[Int]=_
+    var ranged_attack_rolls:Array[Int]=_
 
     def melee_attack(): Unit ={}
     def ranged_attack():Unit={}
