@@ -19,6 +19,9 @@ object Devoir2Ex2Combat1  extends  App {
   abstract class monster(val AC:Int,var hp:Int,val speed:Int,var altitude:Int){      // Very main class for interaction between every entity
     val ID:Int=monster.lastID
     monster.lastID+=1
+    val num_attacks:Int
+    val num_melee_attack_realised:Int
+    val num_ranged_attack_realised:Int
     val melee_range:Int
     val ranged_attack_range:Int
     val melee_damage:attack_damage
