@@ -42,12 +42,12 @@ object Devoir2Ex2Combat1  extends  App {
           val target_ranged_attack : monster = findTarget(this.ranged_attack_range)
 
           if( target_melee != null){
-            print(this.getShortClassName + " attacks (melee) "+target_melee.getShortClassName)
+            print(Console.RED+Console.BOLD+this.getShortClassName+Console.RESET + " attacks (melee) "+target_melee.getShortClassName)
             attack(melee_range,melee_attack_rolls(num_melee_attack_realised),target_melee,melee_damage)
             num_attacks_realized += 1
             num_melee_attack_realised += 1
           }else if(target_ranged_attack!=null){
-            print(this.getShortClassName + " attacks (ranged attack) "+target_ranged_attack.getShortClassName)
+            print(Console.RED+Console.BOLD+this.getShortClassName+Console.RESET + " attacks (ranged attack) "+target_ranged_attack.getShortClassName)
             attack(ranged_attack_range, ranged_attack_rolls(num_ranged_attack_realised), target_ranged_attack, ranged_attack_damage)
             num_attacks_realized += 1
             num_ranged_attack_realised += 1
@@ -71,9 +71,9 @@ object Devoir2Ex2Combat1  extends  App {
         damage_value += damage_params.attack_damage_value
         target.hp -= damage_value
         println(" damage : "+damage_value)
-        if(target.hp <= 0){target.die(this);println(target.getShortClassName + " died !")}else{println(target.getShortClassName + " is now at "+target.hp+" hp")}
+        if(target.hp <= 0){target.die(this);println(Console.CYAN +target.getShortClassName+Console.RESET + " died !")}else{println(Console.RED +target.getShortClassName+Console.RESET + " is now at "+target.hp+" hp")}
       }else{
-        println("\n\t| "+target.getShortClassName+" has "+target.AC+" AC and attack roll was :"+attack_roll_result+" : "+target.getShortClassName+" failed its attack !" )
+        println("\n\t| "+Console.BLUE+Console.BOLD+target.getShortClassName+Console.RESET+" has "+target.AC+" AC and attack roll was :"+attack_roll_result+" : "+target.getShortClassName+" failed its attack !" )
       }
     }
     def die(killer:monster): Unit ={
@@ -88,7 +88,7 @@ object Devoir2Ex2Combat1  extends  App {
       if(adjList.nonEmpty){
         val current_edge = this.adjList.head
         if(current_edge.distance>0){
-          print(this.getShortClassName+" move from "+current_edge.distance+"ft")
+          print(Console.BLUE+this.getShortClassName+Console.RESET+" moves from "+current_edge.distance+"ft")
           if(current_edge.distance> this.speed){current_edge.distance -= this.speed}else{current_edge.distance = 0}
           println(" to "+current_edge.distance+"ft")
         }
@@ -205,7 +205,7 @@ object Devoir2Ex2Combat1  extends  App {
           val distance_of_threatening_enemy = edge_of_threatening_enemy.head.distance
           if (distance_of_threatening_enemy < threatening_enemy.ranged_attack_range){
             this.altitude += 150
-            print("Angel fly "+this.altitude+"ft up")
+            println("Angel fly "+this.altitude+"ft up")
           }else if(this.altitude > 100){
             this.altitude = 0
             print("Angel lands ("+this.altitude+"ft high)")
