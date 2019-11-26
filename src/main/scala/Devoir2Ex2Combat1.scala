@@ -97,6 +97,9 @@ object Devoir2Ex2Combat1  extends  App {
     def getAttackRoll(param:Int): Int ={
       val rand_result = d.nextInt(monster.ATTACK_ROLL.dice_size)
       print("\tattack roll : "+(rand_result+param))
+      if(rand_result == 20){
+        println("coup critique !")
+      }
       rand_result+param
     }
 
@@ -179,7 +182,7 @@ object Devoir2Ex2Combat1  extends  App {
     }
   }
 
-  object monster{var lastID = 0;val MAX_AC_EVER:Int = 100000000;val DEFAULT_SMALL_MELEE_RANGE = 10;val DEFAULT_BIG_MELEE_RANGE = 10;val ATTACK_ROLL = attack_roll(1,20)}
+  object monster extends Serializable {var lastID = 0;val MAX_AC_EVER:Int = 100000000;val DEFAULT_SMALL_MELEE_RANGE = 10;val DEFAULT_BIG_MELEE_RANGE = 10;val ATTACK_ROLL = attack_roll(1,20)}
 
   object angel_solar extends monster(44,363,0,0){   // angel solar, as stated : object only bc only one instance
     val max_health: Int = hp
@@ -192,7 +195,6 @@ object Devoir2Ex2Combat1  extends  App {
     val num_attacks_available:Int = if(melee_attack_rolls.length>ranged_attack_rolls.length)melee_attack_rolls.length else ranged_attack_rolls.length
 
     override def play():Unit ={
-
       if(hp <= (max_health - 15) ){print("Angel regen 15hp, from "+hp);this.hp += 15;println(" to "+hp)}
       super.play()
     }
@@ -242,7 +244,7 @@ object Devoir2Ex2Combat1  extends  App {
     val num_attacks_available:Int = if(melee_attack_rolls.length>ranged_attack_rolls.length)melee_attack_rolls.length else ranged_attack_rolls.length
   }
 
-  class edge(val endA:monster,val endB:monster,var distance:Int)
+  class edge (val endA:monster,val endB:monster,var distance:Int) extends Serializable
 
   def init()={
     var enemies = new ListBuffer[monster]
