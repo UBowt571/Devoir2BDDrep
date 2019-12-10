@@ -16,11 +16,16 @@ object Devoir2Ex2Combat1  extends  App {
 
   case class attack_damage(dice_num:Int, dice_size:Int, attack_damage_value:Int)
   case class attack_roll(dice_num:Int, dice_size:Int)
+  case class message(var attackerID:Int,var attackerName:String,var targetID:Int,var messageType:Int,var attackRoll:Int,var value:Int){
+    override def toString:String={attackerName+" attacks enemy with ID "+targetID+" | attack_roll : "+this.attackRoll+" | value : "+value}
+  }
+  case class coordinates(val enemyID:Int,var distance:Int)
 
-  abstract class monster(val AC:Int,var hp:Int,val speed:Int,var altitude:Int) extends Serializable {      // Very main class for interaction between every entity
+  abstract class monster(val AC:Int,var hp:Int,val speed:Int,var altitude:Int,var distance:Int) extends Serializable {      // Very main class for interaction between every entity
     val ID:Int=monster.lastID
     monster.lastID+=1
     var adjList:ListBuffer[edge] = new ListBuffer[edge]
+    var adjListInt:ListBuffer[coordinates]= new ListBuffer[coordinates]
     val num_attacks_available:Int
     var num_attacks_realized:Int=0
     var num_melee_attack_realised:Int=0
@@ -34,65 +39,124 @@ object Devoir2Ex2Combat1  extends  App {
 
 
     // BASIC FUNCTIONS : MAXIMUM IMPORTANCE : root of program's logic
-    def play():Unit={
-      val loop = new Breaks
-      loop.breakable {
-        for(i <- 0 until this.num_attacks_available){
-          val target_melee: monster = findTarget(this.melee_range)
-          val target_ranged_attack : monster = findTarget(this.ranged_attack_range)
+//    def play():Unit={
+//      var messages = new ListBuffer[message]
+//      val loop = new Breaks
+//      loop.breakable {
+//        for(i <- 0 until this.num_attacks_available){
+//          val target_melee: monster = findTarget(this.melee_range)
+//          val target_ranged_attack : monster = findTarget(this.ranged_attack_range)
+//
+//          if( target_melee != null){
+//            print(Console.RED+Console.BOLD+this.getShortClassName+Console.RESET + " attacks (melee) "+target_melee.getShortClassName)
+//            messages += attack(melee_attack_rolls(num_melee_attack_realised),target_melee,melee_damage)
+//            num_attacks_realized += 1
+//            num_melee_attack_realised += 1
+//          }else if(target_ranged_attack!=null){
+//            print(Console.RED+Console.BOLD+this.getShortClassName+Console.RESET + " attacks (ranged attack) "+target_ranged_attack.getShortClassName)
+//            messages += attack(ranged_attack_rolls(num_ranged_attack_realised), target_ranged_attack, ranged_attack_damage)
+//            num_attacks_realized += 1
+//            num_ranged_attack_realised += 1
+//          }else{
+//            loop.break
+//          }
+//        }
+//      }
+//      move()
+//      num_attacks_realized = 0
+//      num_melee_attack_realised = 0
+//      num_ranged_attack_realised = 0
+//    }
+    def play():ListBuffer[message]={
+      var receivedMessages:Array[message]=null
+      if(emittedMessages!=null){
+        receivedMessages = emittedMessages.filter(current => current.targetID==this.ID||current.targetID==monster.ID_BROADCAST)
+      }
 
+      val messages = new ListBuffer[message]
+//      for(currentReceivedMessage <- receivedMessages){
+//        if(currentReceivedMessage.messageType==monster.ATTACK){
+//          if(currentReceivedMessage.attackRoll>this.AC){
+//            this.hp -= currentReceivedMessage.value
+//            if(this.hp <= 0){
+//              messages+=die()
+//            }
+//          }
+//        }else if(currentReceivedMessage.messageType==monster.MOVE){
+//          if((this.distance-currentReceivedMessage.value) >= 0) {
+//            this.distance -= currentReceivedMessage.value
+//          }
+//        } else if(currentReceivedMessage.messageType == monster.DIE){
+//          this.adjListInt = adjListInt.filter(currentADJ => currentADJ.enemyID != currentReceivedMessage.attackerID)
+//        }
+//      }
+
+        for(i <- 0 until this.num_attacks_available){
+          val target_melee = findTarget(melee_range)
+          val rangedAttack_target = findTarget(ranged_attack_range)
           if( target_melee != null){
-            print(Console.RED+Console.BOLD+this.getShortClassName+Console.RESET + " attacks (melee) "+target_melee.getShortClassName)
-            attack(melee_range,melee_attack_rolls(num_melee_attack_realised),target_melee,melee_damage)
+            messages += attack(melee_attack_rolls(num_melee_attack_realised),target_melee.enemyID,melee_damage)
             num_attacks_realized += 1
             num_melee_attack_realised += 1
-          }else if(target_ranged_attack!=null){
-            print(Console.RED+Console.BOLD+this.getShortClassName+Console.RESET + " attacks (ranged attack) "+target_ranged_attack.getShortClassName)
-            attack(ranged_attack_range, ranged_attack_rolls(num_ranged_attack_realised), target_ranged_attack, ranged_attack_damage)
+          }
+          else if( rangedAttack_target != null){
+            messages += attack(ranged_attack_rolls(num_ranged_attack_realised),target_melee.enemyID,melee_damage)
             num_attacks_realized += 1
             num_ranged_attack_realised += 1
           }else{
-            loop.break
+            val closestEnemy = adjListInt.minBy(current => current.distance)
+            messages += message(this.ID,this.getShortClassName,closestEnemy.enemyID,monster.MOVE,0,this.speed)
           }
         }
-      }
-      move()
-      num_attacks_realized = 0
-      num_melee_attack_realised = 0
-      num_ranged_attack_realised = 0
+      messages
     }
-    def attack(range:Int,attack_roll_flat_val:Int,target:monster,damage_params:attack_damage): Unit ={
+
+    /**
+     *  Code mort au cas où :
+     * target.hp -= damage_value
+     *
+     * if(target.hp <= 0){target.die(this);println(Console.CYAN +target.getShortClassName+Console.RESET + " died !")}else{println(Console.RED +target.getShortClassName+Console.RESET + " is now at "+target.hp+" hp")}
+     * }else{
+     * println("\n\t| "+Console.BLUE+Console.BOLD+target.getShortClassName+Console.RESET+" has "+target.AC+" AC and attack roll was :"+attack_roll_result+" : "+target.getShortClassName+" failed its attack !" )
+     * }
+     *
+     * @param attack_roll_flat_val
+     * @param target
+     * @param damage_params
+     * @return
+     */
+    def attack(attack_roll_flat_val:Int,target:Int,damage_params:attack_damage):message = synchronized {
       val attack_roll_result = getAttackRoll(attack_roll_flat_val)
-      if(target.AC <= attack_roll_result){
+      var current_message:message = null
         var damage_value=0
         for(i <- 0 until damage_params.dice_num){
           damage_value += d.nextInt(damage_params.dice_size)
         }
         damage_value += damage_params.attack_damage_value
-        target.hp -= damage_value
-        println(" damage : "+damage_value)
-        if(target.hp <= 0){target.die(this);println(Console.CYAN +target.getShortClassName+Console.RESET + " died !")}else{println(Console.RED +target.getShortClassName+Console.RESET + " is now at "+target.hp+" hp")}
-      }else{
-        println("\n\t| "+Console.BLUE+Console.BOLD+target.getShortClassName+Console.RESET+" has "+target.AC+" AC and attack roll was :"+attack_roll_result+" : "+target.getShortClassName+" failed its attack !" )
-      }
+        println(Console.RED+Console.BOLD+this.getShortClassName+Console.RESET + " attacks (melee) "+target+" damage : "+damage_value)
+        current_message = message(this.ID,this.getShortClassName,target,monster.ATTACK,attack_roll_result,damage_value)
+      current_message
     }
-    def die(killer:monster): Unit ={
-      if(!this.getShortClassName.contains("angel_solar"))enemies = enemies.filter(x => x.ID != this.ID)
-      edges = edges.filter(x => !(x.endA.ID == this.ID || x.endB.ID == this.ID))
-      this.adjList = this.adjList.filter(x => !(x.endA.ID == this.ID || x.endB.ID == this.ID))
-      killer.adjList = killer.adjList.filter(x => !(x.endA.ID == this.ID || x.endB.ID == this.ID))
-      monsters = monsters.filter(x => !(x.ID == this.ID || x.ID == this.ID))
-      var test = 50
+
+    def die()={
+//      if(!this.getShortClassName.contains("angel_solar"))enemies = enemies.filter(x => x.ID != this.ID)
+//      edges = edges.filter(x => !(x.endA.ID == this.ID || x.endB.ID == this.ID))
+//      this.adjList = this.adjList.filter(x => !(x.endA.ID == this.ID || x.endB.ID == this.ID))
+//      killer.adjList = killer.adjList.filter(x => !(x.endA.ID == this.ID || x.endB.ID == this.ID))
+//      monsters = monsters.filter(x => !(x.ID == this.ID || x.ID == this.ID))
+      message(this.ID,this.getShortClassName,monster.ID_BROADCAST,monster.DIE,0,0)
     }
-    def move():Unit={
-      if(adjList.nonEmpty){
-        val current_edge = this.adjList.head
-        if(current_edge.distance>0){
-          print(Console.BLUE+this.getShortClassName+Console.RESET+" moves from "+current_edge.distance+"ft")
-          if(current_edge.distance> this.speed){current_edge.distance -= this.speed}else{current_edge.distance = 0}
-          println(" to "+current_edge.distance+"ft")
-        }
-      }
+    def move(target:coordinates)={
+      message(this.ID,this.getShortClassName,target.enemyID,monster.MOVE,0,this.speed)
+//      if(adjList.nonEmpty){
+//        val current_edge = this.adjList.head
+//        if(current_edge.distance>0){
+//          print(Console.BLUE+this.getShortClassName+Console.RESET+" moves from "+current_edge.distance+"ft")
+//          if(current_edge.distance> this.speed){current_edge.distance -= this.speed}else{current_edge.distance = 0}
+//          println(" to "+current_edge.distance+"ft")
+//        }
+//      }
+
     }
     def getAttackRoll(param:Int): Int ={
       val rand_result = d.nextInt(monster.ATTACK_ROLL.dice_size)
@@ -104,27 +168,33 @@ object Devoir2Ex2Combat1  extends  App {
     }
 
     // TOOL FUNCTIONS : MODERATE IMPORTANCE : toolbox for program
-    def findTarget(range:Int): monster ={
-      var idealTarget:monster=null
-      if(adjList.nonEmpty){
-        val closeEnoughEnemies = adjList.filter(x => getEuclideanDist(x) <= range)                       // Check if there are enemies close enough
-        if(closeEnoughEnemies.nonEmpty){
-          val closestEnemy = closeEnoughEnemies.minBy(_.distance)                                 // Get closest enemy
-          val closestEnemies = closeEnoughEnemies.filter(x => x.distance <= closestEnemy.distance)
-
-          if(closestEnemies.length>1){                                                          // If multiple enemies closest : check for lowest AC
-            val lowestACEnemy = findLowestAC(closestEnemies)                                 // Get lowest AC enemy
-            val lowestACEnemies = closestEnemies.filter(x =>                                 // Check if there are multiple lowestAC enemies (at same AC)
-              getEnemyFromEdge(x).AC<=lowestACEnemy.AC
-            )
-
-            if(lowestACEnemies.length>1){                                                          // If multiple enemies closest : check for lowest HP
-              idealTarget = findLowestHP(lowestACEnemies)                                        // Get lowest HP enemy
-            }else{idealTarget = lowestACEnemy}                                                   // Check if there are multiple lowestHP enemies (at same HP)
-          }else{idealTarget = getEnemyFromEdge(closestEnemy)}
-        }
-      }
-      idealTarget
+//    def findTarget(range:Int): monster ={
+//      var idealTarget:monster=null
+//      if(adjListInt.nonEmpty){
+//        val closeEnoughEnemies = adjList.filter(x => getEuclideanDist(x) <= range)                       // Check if there are enemies close enough
+//        if(closeEnoughEnemies.nonEmpty){
+//          val closestEnemy = closeEnoughEnemies.minBy(_.distance)                                 // Get closest enemy
+//          val closestEnemies = closeEnoughEnemies.filter(x => x.distance <= closestEnemy.distance)
+//
+//          if(closestEnemies.length>1){                                                          // If multiple enemies closest : check for lowest AC
+//            val lowestACEnemy = findLowestAC(closestEnemies)                                 // Get lowest AC enemy
+//            val lowestACEnemies = closestEnemies.filter(x =>                                 // Check if there are multiple lowestAC enemies (at same AC)
+//              getEnemyFromEdge(x).AC<=lowestACEnemy.AC
+//            )
+//
+//            if(lowestACEnemies.length>1){                                                          // If multiple enemies closest : check for lowest HP
+//              idealTarget = findLowestHP(lowestACEnemies)                                        // Get lowest HP enemy
+//            }else{idealTarget = lowestACEnemy}                                                   // Check if there are multiple lowestHP enemies (at same HP)
+//          }else{idealTarget = getEnemyFromEdge(closestEnemy)}
+//        }
+//      }
+//      idealTarget
+//    }
+    def findTarget(range: Int)={
+      val targets = adjListInt.filter(_.distance<=range)
+      var target:coordinates=null
+      if(targets.nonEmpty){target = targets.minBy(_.distance)}
+      target
     }
     def findLowestAC(closestEnemies:ListBuffer[edge]):monster ={
       var minAC:Int=monster.MAX_AC_EVER
@@ -182,9 +252,9 @@ object Devoir2Ex2Combat1  extends  App {
     }
   }
 
-  object monster extends Serializable {var lastID = 0;val MAX_AC_EVER:Int = 100000000;val DEFAULT_SMALL_MELEE_RANGE = 10;val DEFAULT_BIG_MELEE_RANGE = 10;val ATTACK_ROLL = attack_roll(1,20)}
+  object monster extends Serializable {var lastID = 0;val MAX_AC_EVER:Int = 100000000;val DEFAULT_SMALL_MELEE_RANGE = 10;val DEFAULT_BIG_MELEE_RANGE = 10;val ATTACK_ROLL = attack_roll(1,20);val ATTACK = 0;val MOVE = 1;val DIE=2;val ID_BROADCAST = -1}
 
-  object angel_solar extends monster(44,363,0,0){   // angel solar, as stated : object only bc only one instance
+  class angel_solar extends monster(44,363,0,0,0){   // angel solar, as stated : object only bc only one instance
     val max_health: Int = hp
     val melee_range:Int=monster.DEFAULT_BIG_MELEE_RANGE
     val ranged_attack_range:Int=110
@@ -194,29 +264,29 @@ object Devoir2Ex2Combat1  extends  App {
     ranged_attack_rolls = Array(31,26,21,16)
     val num_attacks_available:Int = if(melee_attack_rolls.length>ranged_attack_rolls.length)melee_attack_rolls.length else ranged_attack_rolls.length
 
-    override def play():Unit ={
-      if(hp <= (max_health - 15) ){print("Angel regen 15hp, from "+hp);this.hp += 15;println(" to "+hp)}
-      super.play()
-    }
+//    override def play():Unit ={
+//      if(hp <= (max_health - 15) ){print("Angel regen 15hp, from "+hp);this.hp += 15;println(" to "+hp)}
+//      super.play()
+//    }
 
-    override def move(): Unit = {
-      if(enemies.nonEmpty){
-        val threatening_enemy = enemies.maxBy(_.ranged_attack_range)
-        val edge_of_threatening_enemy = adjList.filter( x => getEnemyFromEdge(x).ID == threatening_enemy.ID)
-        if (edge_of_threatening_enemy.nonEmpty){
-          val distance_of_threatening_enemy = edge_of_threatening_enemy.head.distance
-          if (distance_of_threatening_enemy < threatening_enemy.ranged_attack_range){
-            this.altitude += 150
-            println("Angel fly "+this.altitude+"ft up")
-          }else if(this.altitude > 100){
-            this.altitude = 0
-            print("Angel lands ("+this.altitude+"ft high)")
-          }
-        }
-      }
-    }
+//    def move(): Unit = {
+//      if(enemies.nonEmpty){
+//        val threatening_enemy = enemies.maxBy(_.ranged_attack_range)
+//        val edge_of_threatening_enemy = adjList.filter( x => getEnemyFromEdge(x).ID == threatening_enemy.ID)
+//        if (edge_of_threatening_enemy.nonEmpty){
+//          val distance_of_threatening_enemy = edge_of_threatening_enemy.head.distance
+//          if (distance_of_threatening_enemy < threatening_enemy.ranged_attack_range){
+//            this.altitude += 150
+//            println("Angel fly "+this.altitude+"ft up")
+//          }else if(this.altitude > 100){
+//            this.altitude = 0
+//            print("Angel lands ("+this.altitude+"ft high)")
+//          }
+//        }
+//      }
+//    }
   }
-  class worgRider(pAC:Int=18,pHP:Int=13,pSpeed:Int = 20,pAltitude:Int=0) extends monster(pAC,pHP,pSpeed,pAltitude){   // worgRider class, 9 of them are instantiated later
+  class worgRider(pDistance:Int=0,pAC:Int=18,pHP:Int=13,pSpeed:Int = 20,pAltitude:Int=0) extends monster(pAC,pHP,pSpeed,pAltitude,pDistance){   // worgRider class, 9 of them are instantiated later
     val melee_range:Int=monster.DEFAULT_SMALL_MELEE_RANGE
     val ranged_attack_range:Int=60
     val melee_damage:attack_damage = attack_damage(1,8,2)                //1d8+2
@@ -225,7 +295,7 @@ object Devoir2Ex2Combat1  extends  App {
     ranged_attack_rolls = Array(4)
     val num_attacks_available:Int = if(melee_attack_rolls.length>ranged_attack_rolls.length)melee_attack_rolls.length else ranged_attack_rolls.length
   }
-  class doubleAxeFury(pAC:Int=17,pHP:Int=142,pSpeed:Int = 40,pAltitude:Int=0) extends monster(pAC,pHP,pSpeed,pAltitude){  // doubleAxeFury class, 4 of them are instantiated later
+  class doubleAxeFury(pDistance:Int=0,pAC:Int=17,pHP:Int=142,pSpeed:Int = 40,pAltitude:Int=0) extends monster(pAC,pHP,pSpeed,pAltitude,pDistance){  // doubleAxeFury class, 4 of them are instantiated later
     val melee_range:Int=monster.DEFAULT_SMALL_MELEE_RANGE
     val ranged_attack_range:Int=110
     val melee_damage:attack_damage = attack_damage(1,8,10)                //1d8+10
@@ -234,7 +304,7 @@ object Devoir2Ex2Combat1  extends  App {
     ranged_attack_rolls = Array(16,11,6)
     val num_attacks_available:Int = if(melee_attack_rolls.length>ranged_attack_rolls.length)melee_attack_rolls.length else ranged_attack_rolls.length
   }
-  object warlord extends monster(27,141,30,0){     // warlord, as stated : object only bc only one instance
+  class warlord extends monster(27,141,30,0,0){     // warlord, as stated : object only bc only one instance
     val melee_range:Int=monster.DEFAULT_BIG_MELEE_RANGE
     val ranged_attack_range:Int=10
     val melee_damage:attack_damage = attack_damage(1,8,10)                //1d8+10
@@ -247,37 +317,57 @@ object Devoir2Ex2Combat1  extends  App {
   class edge (val endA:monster,val endB:monster,var distance:Int) extends Serializable
 
   def init()={
-    var enemies = new ListBuffer[monster]
-    for(i <- 0 until 9){
-      enemies += new worgRider
+//    for(i <- 0 until 9){
+//      monsters += new worgRider
+//    }
+//    for(i <- 0 until 4){
+//      monsters += new doubleAxeFury
+//    }
+    monsters += new warlord
+    monsters += new angel_solar
+    val angelID = monsters.last.ID
+    for(current_monster <- monsters){
+      if(!current_monster.isInstanceOf[angel_solar]){
+        current_monster.distance = getDist()
+        current_monster.adjListInt+= coordinates(angelID,current_monster.distance)
+        enemiesID+=current_monster.ID
+      }else{
+        for(current_sub_monster <- monsters){
+          if(!current_sub_monster.isInstanceOf[angel_solar]){
+            current_monster.adjListInt+=coordinates(current_sub_monster.ID,current_sub_monster.distance)
+          }
+
+        }
+      }
     }
-    for(i <- 0 until 4){
-      enemies += new doubleAxeFury
-    }
-    enemies += warlord
-    enemies
+    monsters
   }
 
-  var enemies = init()      // enemies : ListBuffer containing all "bad" monsters, enemies of the angel solar
-  var edges = new ListBuffer[edge]
-  for(i <- enemies.indices){
-    edges += new edge(enemies(i),angel_solar,d.nextInt(10)+200)    // d.nextInt(50)+200
-    enemies(i).adjList += edges(i)    // every monster knows the angel solar
-    angel_solar.adjList += edges(i)   // the angel solar knows everybody        Both are linked to instances so if change is made from one end one the edge, both ends see the change
+  def getDist()={
+    d.nextInt(10)
   }
-  var monsters = new ListBuffer[monster]
-  monsters.appendAll(enemies)
-  monsters+=angel_solar
+
+  var monsters = new ListBuffer[monster]                         // enemies : ListBuffer containing all "bad" monsters, enemies of the angel solar
+  var enemiesID = new ListBuffer[Int]
+  init()
+  var enemies = new ListBuffer[monster]
+  var edges = new ListBuffer[edge]
+  var monstersRDD = sc.makeRDD(monsters).map(currentMonster => {
+    val tuple = Tuple2(currentMonster.ID,currentMonster)
+    tuple
+  })
 
   // END OF INIT
   // START OF THE FIGHT
 
   println("******* start of the fight *******")
   var round_number = 0
- while(monsters.size>1){
-   monsters.foreach(_.play())
+// while(monstersRDD.count() > 1){
+   var emittedMessages = monstersRDD.flatMap(currentMonster => {
+     currentMonster._2.play()
+   }).collect()
+
    println("******* end of round "+round_number+"*******")
    round_number+=1
- }
-
+// }
 }
