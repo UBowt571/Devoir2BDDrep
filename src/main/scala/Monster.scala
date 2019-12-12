@@ -14,7 +14,7 @@ class Monster(monsterString:String, monsterID_arg:Integer, var monster_ID:Intege
 
   def get_name(): String ={
     name = content.substring(content.indexOf("align=\"left\"")+28,content.indexOf("</b></td>"))
-    name+=" - "
+    name+=" ~ "
     name
   }
 
@@ -27,7 +27,7 @@ class Monster(monsterString:String, monsterID_arg:Integer, var monster_ID:Intege
       } else if(content.contains("<div class=\"Details\">\n<p class='HangIndent'><b>Spells Prepared")){
         textSpell = content.substring(content.indexOf("<div class=\"Details\">\n<p class='HangIndent'><b>Spells Prepared"),content.indexOf("<div class=\"Sep1\"><b>STATISTICS"))
       }
-      val regex = new Regex("HangIndent_2\'>[a-zA-Z0-9-\"=+,().: /]*</p>").findAllMatchIn(textSpell)
+      val regex = new Regex("HangIndent_2\'>[a-zA-Z0-9\"='+,%<>().: /-]*</p>").findAllMatchIn(textSpell)
       while(regex.hasNext){ // On récupère chaque ligne de sorts pour un monstre
         var rawName = regex.next().toString()
         rawName = rawName.substring(rawName.indexOf("2'>")+3,rawName.lastIndexOf("</p"))
@@ -38,24 +38,18 @@ class Monster(monsterString:String, monsterID_arg:Integer, var monster_ID:Intege
   monsterSpells
   }
 
-  get_content()
-  if(content!=""){ // Si la page du monstre n'est pas vide
-    monster_ID = monsterID_arg
-    name = get_name()
-    monsterSpells = get_spells()
-  }
-
   // Fonction qui découpe les lignes de sorts afin de retourner les noms de sorts conformément au sorts récoltés
-  def spellMonstersSeparator(monsterSpells : ListBuffer[String]): ListBuffer[String] ={
-    val monsterSpells2:ListBuffer[String] = new ListBuffer[String]
-    for(i <- monsterSpells.indices){
+  // Assez conséquente car on gère tous les cas spéciaux de dxcontent
+  def spellMonstersSeparator(monsterSpellsPhrase : ListBuffer[String]): ListBuffer[String] ={
+    var monsterSpells:ListBuffer[String] = new ListBuffer[String]
+    for(i <- monsterSpellsPhrase.indices){
       // On commence par enlever les infos sur les cooldowns des spells : "At will - 1st -"
       // ainsi que les informations entre paranthèses : spell1 (DC 12), spell2 (3)
-      monsterSpells(i) = monsterSpells(i).replaceAll("Constant[ -]*|([Aa])t ([Ww])ill[ -]*|[0-9](st|nd|rd|th)[ -]*|0 [(]at will[)][ -]*|[(]*[0-9]/(day|week|month|year)[ )-]*|[ ]*[(][A-Za-z0-9.,% -|]*[)]","")
-      // On gère et retire les quelques exceptions
-      monsterSpells(i) = monsterSpells(i).replaceAll("any one of the following, with a maximum duration of 1 week: |APG","")
+      monsterSpellsPhrase(i) = monsterSpellsPhrase(i).replaceAll("Constant[ -]*|([Aa])t ([Ww])ill[ -]*|[0-9](st|nd|rd|th)[ ]*[(][0-9][)][ -]*|[0-9](st|nd|rd|th)[ -]*|0 [(]at[ -]*will[)][ -]*|[(]*[0-9]*/(minute|hour|day|week|month|year)[ )-]*|[ ]*[(][A-Za-z0-9.:' ,%+\\ -]*[)][-]*|<[A-Za-z0-9./',:=%+ \\ -]*>","")
+      // On gère et retire les quelques exceptions de DXCONTENT
+      monsterSpellsPhrase(i) = monsterSpellsPhrase(i).replaceAll("any one of the following, with a maximum duration of 1 week: |, one additional ability dependent on alignment|, plus 1 domain spell|, [0-9] more|[(]all|abilities always active[)]|[0-9] remaining[)] - |[.]|Cooperative Spell-Like Abilities|Domain Spell-Like Abilities|(Unholy|Druid|Sorcerer|Cleric)*Spells Prepared|Sorcerer Spells Known|Spells Known|Wizard|(one|two) stolen spel(l|ls) or spell-like abilit(y|ies) per round|one additional ability based on alignment|Special Attacks|other creatures only[)]|x2|APG|UM|MA|M|UC|D","")
       // On détecte spell par spell qui sont séparés par ", "
-      val arrayMonsterSpells = monsterSpells(i).split(", ")
+      val arrayMonsterSpells = monsterSpellsPhrase(i).split(",[ ]*|0-| {3}[-]*")
       for(i <- arrayMonsterSpells.indices){
         // Un spell indiqué comme "greater spell" s'appelle en réalité "Spell, Greater"
         if(arrayMonsterSpells(i).contains("greater")){
@@ -67,9 +61,19 @@ class Monster(monsterString:String, monsterID_arg:Integer, var monster_ID:Intege
         // On enlève les espaces au début et à la fin
         arrayMonsterSpells(i) = arrayMonsterSpells(i).trim
 
-        monsterSpells2.append(arrayMonsterSpells(i))
+        monsterSpells.append(arrayMonsterSpells(i))
       }
+      // On retire les spells vides qui ont pu être récupérés par le Crawler
+      monsterSpells = monsterSpells.filter(x => x.nonEmpty)
     }
-    monsterSpells2
+    monsterSpells
+  }
+
+
+  get_content()
+  if(content!=""){ // Si la page du monstre n'est pas vide
+    monster_ID = monsterID_arg
+    name = get_name()
+    monsterSpells = get_spells()
   }
 }
