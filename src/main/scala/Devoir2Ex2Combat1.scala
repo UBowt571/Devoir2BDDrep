@@ -46,7 +46,7 @@ object Devoir2Ex2Combat1  extends  App {
         for(currentReceivedMessage <- receivedMessages){
           if(currentReceivedMessage.messageType==monster.ATTACK){
             var display = Console.RED+Console.BOLD+currentReceivedMessage.attackerName+Console.RESET + " attacks (melee) "+Console.RED+Console.BOLD+this.getShortClassName+Console.RESET +" damage : "+currentReceivedMessage.value+" | ("
-            if(currentReceivedMessage.attackRoll == 1000){display+=" critical hit ! "}else{display += "attack roll :"+currentReceivedMessage.attackRoll+" ; target AC :"+this.AC+")"}
+            if(currentReceivedMessage.attackRoll == monster.CRITICAL_HIT){display+=" critical hit ! "}else{display += "attack roll :"+currentReceivedMessage.attackRoll+" ; target AC :"+this.AC+")"}
             println(display)
             if(currentReceivedMessage.attackRoll>this.AC){
               this.hp -= currentReceivedMessage.value
@@ -108,7 +108,7 @@ object Devoir2Ex2Combat1  extends  App {
     def getAttackRoll(param:Int): Int ={
       var rand_result = d.nextInt(monster.ATTACK_ROLL.dice_size)
       if(rand_result == 20){
-        rand_result = 1000
+        rand_result = monster.CRITICAL_HIT    // Critical hit !
       }
       rand_result+param
     }
@@ -136,7 +136,7 @@ object Devoir2Ex2Combat1  extends  App {
     }
   }
 
-  object monster extends Serializable {var lastID = 0;val MAX_AC_EVER:Int = 100000000;val DEFAULT_SMALL_MELEE_RANGE = 10;val DEFAULT_BIG_MELEE_RANGE = 10;val ATTACK_ROLL = attack_roll(1,20);val ATTACK = 0;val MOVE = 1;val DIE=2;val ID_BROADCAST: Int = -1}
+  object monster extends Serializable {var lastID = 0;val MAX_AC_EVER:Int = 100000000;val DEFAULT_SMALL_MELEE_RANGE = 10;val DEFAULT_BIG_MELEE_RANGE = 10;val ATTACK_ROLL = attack_roll(1,20);val ATTACK = 0;val MOVE = 1;val DIE=2;val ID_BROADCAST: Int = -1;val CRITICAL_HIT:Int=1000}
 
   class angel_solar extends monster(44,363,0,0,0){
     val max_health: Int = hp
