@@ -15,7 +15,7 @@ object Devoir2Ex2Combat1  extends  App {
 
   case class attack_damage(dice_num:Int, dice_size:Int, attack_damage_value:Int)
   case class attack_roll(dice_num:Int, dice_size:Int)
-  case class message(var attackerID:Int,var attackerName:String,var targetID:Int,var messageType:Int,var attackRoll:Int,var value:Int){
+  case class message(var attackerID:Int,var attackerName:String,var targetID:Int,var messageType:Int,var attackRoll:Int,var value:Int,var melee:Boolean){
     override def toString:String={attackerName+" attacks enemy with ID "+targetID+" | attack_roll : "+this.attackRoll+" | value : "+value}
   }
   case class coordinates(enemyID:Int, var distance:Int)
@@ -39,13 +39,15 @@ object Devoir2Ex2Combat1  extends  App {
     // BASIC FUNCTIONS : MAXIMUM IMPORTANCE : root of program's logic
     def play():ListBuffer[message]={
       var receivedMessages:Array[message]=null
-      val messages = new ListBuffer[message]
+      var messages = new ListBuffer[message]
       if(emittedMessages!=null){
         receivedMessages = emittedMessages.filter(current => current.targetID==this.ID||current.targetID==monster.ID_BROADCAST)
         emittedMessages = emittedMessages.filter(current=> current.targetID!=this.ID)
         for(currentReceivedMessage <- receivedMessages){
           if(currentReceivedMessage.messageType==monster.ATTACK){
-            var display = Console.RED+Console.BOLD+currentReceivedMessage.attackerName+Console.RESET + " attacks (melee) "+Console.RED+Console.BOLD+this.getShortClassName+Console.RESET +" damage : "+currentReceivedMessage.value+" | ("
+            var display = Console.RED+Console.BOLD+currentReceivedMessage.attackerName+Console.RESET + " attacks "
+            if(currentReceivedMessage.melee){display+="(melee) "}else{display+="(ranged) "}
+            display+=Console.GREEN+Console.BOLD+this.getShortClassName+Console.RESET +" damage : "+currentReceivedMessage.value+" | ("
             if(currentReceivedMessage.attackRoll == monster.CRITICAL_HIT){display+=" critical hit ! "}else{display += "attack roll :"+currentReceivedMessage.attackRoll+" ; target AC :"+this.AC+")"}
             println(display)
             if(currentReceivedMessage.attackRoll>this.AC){
@@ -55,6 +57,7 @@ object Devoir2Ex2Combat1  extends  App {
               }
             }
           }else if(currentReceivedMessage.messageType==monster.MOVE){
+            println(this.getShortClassName+" receives a move "+currentReceivedMessage.attackerName)
             if((this.distance-currentReceivedMessage.value) >= 0) {
               this.distance -= currentReceivedMessage.value
             }
@@ -69,17 +72,24 @@ object Devoir2Ex2Combat1  extends  App {
             val target_melee = findTarget(melee_range)
             val rangedAttack_target = findTarget(ranged_attack_range)
             if( target_melee != null){
-              messages += attack(melee_attack_rolls(num_melee_attack_realised),target_melee.enemyID,melee_damage)
+              messages += attack(melee_attack_rolls(num_melee_attack_realised),target_melee.enemyID,melee_damage,melee = true)
               num_attacks_realized += 1
               num_melee_attack_realised += 1
             }
             else if( rangedAttack_target != null){
-              messages += attack(ranged_attack_rolls(num_ranged_attack_realised),target_melee.enemyID,melee_damage)
+              messages += attack(ranged_attack_rolls(num_ranged_attack_realised),rangedAttack_target.enemyID,melee_damage,melee = false)
               num_attacks_realized += 1
               num_ranged_attack_realised += 1
             }else{
               val closestEnemy = adjList.minBy(current => current.distance)
-              messages += message(this.ID,this.getShortClassName,closestEnemy.enemyID,monster.MOVE,0,this.speed)
+              println(this.getShortClassName+" make a move to "+closestEnemy.enemyID)
+              println("adjList : "+adjList.filter(current => current.enemyID == closestEnemy.enemyID)+" this.speed : "+this.speed)
+              if(closestEnemy.distance<=this.speed){closestEnemy.distance = 0}else{closestEnemy.distance -= this.speed}
+//              closestEnemy.distance -= this.speed
+//              adjList(closestEnemy.enemyID)
+
+              println("closestEnemy : "+closestEnemy.distance+" adjList : "+adjList.filter(current => current.enemyID == closestEnemy.enemyID))
+              messages += message(this.ID,this.getShortClassName,closestEnemy.enemyID,monster.MOVE,0,this.speed,melee = false)
             }
           }
         }
@@ -87,7 +97,7 @@ object Devoir2Ex2Combat1  extends  App {
       messages
     }
 
-    def attack(attack_roll_flat_val:Int,target:Int,damage_params:attack_damage):message = synchronized {
+    def attack(attack_roll_flat_val:Int,target:Int,damage_params:attack_damage,melee: Boolean):message = synchronized {
       val attack_roll_result = getAttackRoll(attack_roll_flat_val)
       var current_message:message = null
         var damage_value=0
@@ -95,15 +105,15 @@ object Devoir2Ex2Combat1  extends  App {
           damage_value += d.nextInt(damage_params.dice_size)
         }
         damage_value += damage_params.attack_damage_value
-        current_message = message(this.ID,this.getShortClassName,target,monster.ATTACK,attack_roll_result,damage_value)
+        current_message = message(this.ID,this.getShortClassName,target,monster.ATTACK,attack_roll_result,damage_value,melee)
       current_message
     }
 
     def die(): message ={
-      message(this.ID,this.getShortClassName,monster.ID_BROADCAST,monster.DIE,0,0)
+      message(this.ID,this.getShortClassName,monster.ID_BROADCAST,monster.DIE,0,0,melee = false)
     }
     def move(target:coordinates): message ={
-      message(this.ID,this.getShortClassName,target.enemyID,monster.MOVE,0,this.speed)
+      message(this.ID,this.getShortClassName,target.enemyID,monster.MOVE,0,this.speed,melee = false)
     }
     def getAttackRoll(param:Int): Int ={
       var rand_result = d.nextInt(monster.ATTACK_ROLL.dice_size)
@@ -206,7 +216,7 @@ object Devoir2Ex2Combat1  extends  App {
   }
 
   def getDist ={
-    d.nextInt(10)
+    d.nextInt(10)+40
   }
 
   var monsters = new ListBuffer[monster]                         // enemies : ListBuffer containing all "bad" monsters, enemies of the angel solar
