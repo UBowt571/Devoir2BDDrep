@@ -2,6 +2,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Random
+import scala.util.control.Breaks._
 
 
 object Devoir2Ex2Combat1  extends  App {
@@ -48,7 +49,7 @@ object Devoir2Ex2Combat1  extends  App {
             var display = Console.RED+Console.BOLD+currentReceivedMessage.attackerName+Console.RESET + " attacks "
             if(currentReceivedMessage.melee){display+="(melee) "}else{display+="(ranged) "}
             display+=Console.GREEN+Console.BOLD+this.getShortClassName+Console.RESET +" damage : "+currentReceivedMessage.value+" | ("
-            if(currentReceivedMessage.attackRoll == monster.CRITICAL_HIT){display+=" critical hit ! "}else{display += "attack roll :"+currentReceivedMessage.attackRoll+" ; target AC :"+this.AC+")"}
+            if(currentReceivedMessage.attackRoll == monster.CRITICAL_HIT){display+=" critical hit ! "}else{display += "attack roll :"+currentReceivedMessage.attackRoll+" ; target AC :"+this.AC+" ; target hp : "+this.hp+")"}
             println(display)
             if(currentReceivedMessage.attackRoll>this.AC){
               this.hp -= currentReceivedMessage.value
@@ -57,7 +58,7 @@ object Devoir2Ex2Combat1  extends  App {
               }
             }
           }else if(currentReceivedMessage.messageType==monster.MOVE){
-            println(this.getShortClassName+" receives a move "+currentReceivedMessage.attackerName)
+            println(Console.BLUE+Console.BOLD+currentReceivedMessage.attackerName+Console.RESET+" moves toward "+Console.BLUE+Console.BOLD+this.getShortClassName+Console.RESET+" at speed "+currentReceivedMessage.value)
             if((this.distance-currentReceivedMessage.value) >= 0) {
               this.distance -= currentReceivedMessage.value
             }
@@ -66,30 +67,33 @@ object Devoir2Ex2Combat1  extends  App {
           }
         }
       }
-
-        for(i <- 0 until this.num_attacks_available){
-          if(this.hp>0){
-            val target_melee = findTarget(melee_range)
-            val rangedAttack_target = findTarget(ranged_attack_range)
-            if( target_melee != null){
-              messages += attack(melee_attack_rolls(num_melee_attack_realised),target_melee.enemyID,melee_damage,melee = true)
-              num_attacks_realized += 1
-              num_melee_attack_realised += 1
-            }
-            else if( rangedAttack_target != null){
-              messages += attack(ranged_attack_rolls(num_ranged_attack_realised),rangedAttack_target.enemyID,melee_damage,melee = false)
-              num_attacks_realized += 1
-              num_ranged_attack_realised += 1
-            }else{
-              val closestEnemy = adjList.minBy(current => current.distance)
-              println(this.getShortClassName+" make a move to "+closestEnemy.enemyID)
-              println("adjList : "+adjList.filter(current => current.enemyID == closestEnemy.enemyID)+" this.speed : "+this.speed)
-              if(closestEnemy.distance<=this.speed){closestEnemy.distance = 0}else{closestEnemy.distance -= this.speed}
-//              closestEnemy.distance -= this.speed
-//              adjList(closestEnemy.enemyID)
-
-              println("closestEnemy : "+closestEnemy.distance+" adjList : "+adjList.filter(current => current.enemyID == closestEnemy.enemyID))
-              messages += message(this.ID,this.getShortClassName,closestEnemy.enemyID,monster.MOVE,0,this.speed,melee = false)
+        breakable{
+          for(i <- 0 until this.num_attacks_available){
+            if(this.hp>0){
+              val target_melee = findTarget(melee_range)
+              val rangedAttack_target = findTarget(ranged_attack_range)
+              if( target_melee != null){
+                messages += attack(melee_attack_rolls(num_melee_attack_realised),target_melee.enemyID,melee_damage,melee = true)
+                num_attacks_realized += 1
+                num_melee_attack_realised += 1
+              }
+              else if( rangedAttack_target != null){
+                messages += attack(ranged_attack_rolls(num_ranged_attack_realised),rangedAttack_target.enemyID,melee_damage,melee = false)
+                num_attacks_realized += 1
+                num_ranged_attack_realised += 1
+              }else{
+                val closestEnemy = adjList.minBy(current => current.distance)
+                if(closestEnemy!=null){
+                  val previousDist = closestEnemy.distance
+                  if(closestEnemy.distance<=this.speed){closestEnemy.distance = 0}else{closestEnemy.distance -= this.speed}
+                  val distanceCrossed = previousDist - closestEnemy.distance
+                  if(distanceCrossed >0){
+                    messages += message(this.ID,this.getShortClassName,closestEnemy.enemyID,monster.MOVE,0,distanceCrossed,melee = false)
+                    println(this.getShortClassName+" distanceCrossed : "+distanceCrossed+" enemy dist:"+closestEnemy.distance)
+                  }
+                }
+                break
+              }
             }
           }
         }
@@ -216,7 +220,7 @@ object Devoir2Ex2Combat1  extends  App {
   }
 
   def getDist ={
-    d.nextInt(10)+40
+    d.nextInt(10)+400
   }
 
   var monsters = new ListBuffer[monster]                         // enemies : ListBuffer containing all "bad" monsters, enemies of the angel solar
