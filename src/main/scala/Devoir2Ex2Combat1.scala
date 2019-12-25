@@ -17,7 +17,7 @@ object Devoir2Ex2Combat1  extends  App {
   case class attack_damage(dice_num:Int, dice_size:Int, attack_damage_value:Int)
   case class attack_roll(dice_num:Int, dice_size:Int)
   case class message(var attackerID:Int,var attackerName:String,var targetID:Int,var messageType:Int,var attackRoll:Int,var value:Int,var melee:Boolean){
-    override def toString:String={attackerName+" attacks enemy with ID "+targetID+" | attack_roll : "+this.attackRoll+" | value : "+value}
+    override def toString:String={attackerName+" interact enemy with ID "+targetID+" | attack_roll : "+this.attackRoll+" | value : "+value+" | type : "+this.messageType}
   }
   case class coordinates(enemyID:Int, var distance:Int)
 
@@ -58,9 +58,13 @@ object Devoir2Ex2Combat1  extends  App {
               }
             }
           }else if(currentReceivedMessage.messageType==monster.MOVE){
-            println(Console.BLUE+Console.BOLD+currentReceivedMessage.attackerName+Console.RESET+" moves toward "+Console.BLUE+Console.BOLD+this.getShortClassName+Console.RESET+" at speed "+currentReceivedMessage.value)
-            if((this.distance-currentReceivedMessage.value) >= 0) {
-              this.distance -= currentReceivedMessage.value
+            var movetarget_array = adjList.filter(current=> current.enemyID == currentReceivedMessage.attackerID)
+            var movetarget:coordinates = null
+            if(!movetarget_array.isEmpty&&movetarget_array.size==1){
+              movetarget = movetarget_array.head
+            }
+            if((movetarget.distance-currentReceivedMessage.value) >= 0) {
+              movetarget.distance -= currentReceivedMessage.value
             }
           } else if(currentReceivedMessage.messageType == monster.DIE){
             this.adjList = adjList.filter(currentADJ => currentADJ.enemyID != currentReceivedMessage.attackerID)
@@ -248,5 +252,6 @@ object Devoir2Ex2Combat1  extends  App {
 
    println("******* end of round "+round_number+"*******")
    round_number+=1
+   if(round_number == 50){System.exit(0)}
  }
 }
