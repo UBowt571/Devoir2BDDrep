@@ -58,13 +58,15 @@ object Devoir2Ex2Combat1  extends  App {
               }
             }
           }else if(currentReceivedMessage.messageType==monster.MOVE){
-            var movetarget_array = adjList.filter(current=> current.enemyID == currentReceivedMessage.attackerID)
+            val movetarget_array = adjList.filter(current => current.enemyID == currentReceivedMessage.attackerID)
             var movetarget:coordinates = null
-            if(!movetarget_array.isEmpty&&movetarget_array.size==1){
+            if(movetarget_array.nonEmpty&&movetarget_array.size==1){
               movetarget = movetarget_array.head
-            }
-            if((movetarget.distance-currentReceivedMessage.value) >= 0) {
-              movetarget.distance -= currentReceivedMessage.value
+              if((movetarget.distance-currentReceivedMessage.value) >= 0) {
+                movetarget.distance -= currentReceivedMessage.value
+                val display = Console.BLUE+Console.BOLD+currentReceivedMessage.attackerName+Console.RESET + " move of "+currentReceivedMessage.value+" torward "+Console.GREEN+Console.BOLD+this.getShortClassName+Console.RESET
+                println(display)
+              }
             }
           } else if(currentReceivedMessage.messageType == monster.DIE){
             this.adjList = adjList.filter(currentADJ => currentADJ.enemyID != currentReceivedMessage.attackerID)
@@ -93,7 +95,6 @@ object Devoir2Ex2Combat1  extends  App {
                   val distanceCrossed = previousDist - closestEnemy.distance
                   if(distanceCrossed >0){
                     messages += message(this.ID,this.getShortClassName,closestEnemy.enemyID,monster.MOVE,0,distanceCrossed,melee = false)
-                    println(this.getShortClassName+" distanceCrossed : "+distanceCrossed+" enemy dist:"+closestEnemy.distance)
                   }
                 }
                 break
